@@ -277,6 +277,14 @@ extern bool dir_exists(const char *path);
 extern bool dir_create(const char *path);
 
 /*
+ * Asciiverse: the player's data folder, $XDG_DATA_HOME/pwmangband
+ * (~/.local/share/pwmangband by default), and the game's lib folder when it
+ * sits beside the program, as in an av install.
+ */
+extern const char *player_data_path(void);
+extern bool exe_lib_path(char *buf, size_t len);
+
+/*
  * An opaque file handle for Angband directory handling.
  */
 typedef struct ang_dir ang_dir;

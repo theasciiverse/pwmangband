@@ -71,6 +71,10 @@ static void init_stuff(void)
     my_strcpy(libpath, DEFAULT_LIB_PATH, sizeof(libpath));
     my_strcpy(datapath, DEFAULT_DATA_PATH, sizeof(datapath));
 
+    /* Asciiverse: a lib folder beside the program comes first */
+    if (exe_lib_path(libpath, sizeof(libpath)))
+        my_strcpy(configpath, libpath, sizeof(configpath));
+
     /* Add a path separator (only if needed) */
     if (!suffix(configpath, PATH_SEP))
         my_strcat(configpath, PATH_SEP, sizeof(configpath));
@@ -226,14 +230,14 @@ int main(int argc, char *argv[])
     /* Setup assert hook */
     assert_aux = exit_game_panic;
 
+    /* Save the "program name" (Asciiverse: init_stuff() looks beside it) */
+    argv0 = argv[0];
+
     /* Get the file paths */
     init_stuff();
 
     /* Setup our logging hook */
     plog_aux = server_log;
-
-    /* Save the "program name" */
-    argv0 = argv[0];
 
 #ifdef UNIX
     /* Default permissions on files */

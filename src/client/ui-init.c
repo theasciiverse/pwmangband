@@ -136,7 +136,7 @@ void init_file_paths(const char *configpath, const char *libpath, const char *da
 	if (strncmp(ANGBAND_SYS, "test", 4) == 0)
 		path_build(buf, sizeof(buf), PRIVATE_USER_PATH, "Test");
 	else
-		path_build(buf, sizeof(buf), PRIVATE_USER_PATH, VERSION_NAME);
+		my_strcpy(buf, PRIVATE_USER_PATH, sizeof(buf));
 	ANGBAND_DIR_USER = string_make(buf);
 #else /* !PRIVATE_USER_PATH */
 #ifdef MACH_O_CARBON
@@ -270,6 +270,10 @@ void init_stuff(void)
     my_strcpy(configpath, DEFAULT_CONFIG_PATH, sizeof(configpath));
     my_strcpy(libpath, DEFAULT_LIB_PATH, sizeof(libpath));
     my_strcpy(datapath, DEFAULT_DATA_PATH, sizeof(datapath));
+
+    /* Asciiverse: a lib folder beside the program comes first */
+    if (exe_lib_path(libpath, sizeof(libpath)))
+        my_strcpy(configpath, libpath, sizeof(configpath));
 #endif
     /* Add a path separator (only if needed) */
     if (!suffix(configpath, PATH_SEP))

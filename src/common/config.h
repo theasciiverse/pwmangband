@@ -76,7 +76,7 @@
  * for storing pref files and character dumps.
  */
 #if defined(UNIX) && !defined(MACH_O_CARBON) && !defined(PRIVATE_USER_PATH)
-# define PRIVATE_USER_PATH "~/.pwmangband"
+# define PRIVATE_USER_PATH player_data_path()
 #endif
 
 #endif /* ON_ANDROID */

@@ -1436,6 +1436,47 @@ void file_rewind(ang_file *f)
 
 
 /*
+ * Asciiverse: the player's data folder, $XDG_DATA_HOME/pwmangband, or
+ * ~/.local/share/pwmangband when that is not set
+ */
+const char *player_data_path(void)
+{
+    static char path[1024];
+    const char *xdg = getenv("XDG_DATA_HOME");
+    const char *home = getenv("HOME");
+
+    if (path[0]) return path;
+    if (xdg && (xdg[0] == '/'))
+        strnfmt(path, sizeof(path), "%s/pwmangband", xdg);
+    else
+        strnfmt(path, sizeof(path), "%s/.local/share/pwmangband", (home? home: "."));
+    return path;
+}
+
+
+/*
+ * Asciiverse: the lib folder beside the program, when there is one (an av
+ * install); otherwise the compiled-in paths are used
+ */
+bool exe_lib_path(char *buf, size_t len)
+{
+    const char *slash;
+    char test[1024];
+    size_t dirlen;
+
+    if (!argv0) return false;
+    slash = strrchr(argv0, '/');
+    if (!slash) return false;
+    dirlen = (size_t)(slash - argv0);
+    if (dirlen + 6 > len) return false;
+    my_strcpy(buf, argv0, dirlen + 1);
+    my_strcat(buf, "/lib/", len);
+    path_build(test, sizeof(test), buf, "customize");
+    return dir_exists(test);
+}
+
+
+/*
  * Return whether or not a directory exists
  */
 bool dir_exists(const char *path)

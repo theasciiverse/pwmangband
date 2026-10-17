@@ -502,6 +502,17 @@ void conf_init(void* param)
     strcpy(buf, "/pwmangclient.ini");
 #endif
 
+#if defined(UNIX) && !defined(MACH_O_CARBON) && !defined(ON_ANDROID)
+    /*
+     * Asciiverse: the config file lives in the player's data folder, and a
+     * new one is written there
+     */
+    if (!config)
+    {
+        path_build(config_name, 1024, player_data_path(), "pwmangrc");
+        config = file_open(config_name, MODE_READ, -1);
+    }
+#else
     /* Try to find home directory */
     if (!config && getenv("HOME"))
     {
@@ -527,6 +538,7 @@ void conf_init(void* param)
         /* Attempt to open file */
         config = file_open(config_name, MODE_READ, -1);
     }
+#endif
 
 #if defined(ON_IOS) || (defined(ON_OSX) && !defined(HAVE_CONFIG_H))
     if (!config)
