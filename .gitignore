@@ -52,3 +52,13 @@ src/common/*.obj
 src/server/*.obj
 src/win/*.obj
 src/win/angband.RES
+
+# Asciiverse build output
+/pwmangband
+/pwmangclient
+/stage/
+/dist/
+/out/
+autom4te.cache/
+src/autoconf.h.in~
+configure~

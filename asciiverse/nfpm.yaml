@@ -1,0 +1,64 @@
+# System packages (.deb, .rpm, .apk, Arch) for PWMAngband, built by nfpm from
+# the same static Linux build as the av archive. The release workflow sets
+# VERSION, RELEASE (our packaging release) and ARCH (amd64 or arm64).
+#
+# No .desktop file on purpose: av is the one place titles are started from,
+# so Asciiverse packages never add menu entries (asciiverse/CLAUDE.md).
+#
+# Upstream's names: pwmangband is the server, pwmangclient the curses
+# client. pwmangband-play starts a game on this machine (server and client)
+# or, with a host, joins a server elsewhere. The programs find their data in
+# /usr/share/pwmangband; the player's files go to ~/.local/share/pwmangband.
+# Only what the curses client and the server read is shipped: no fonts,
+# tiles, sounds or music.
+name: pwmangband
+arch: ${ARCH}
+platform: linux
+version: ${VERSION}
+release: ${RELEASE}
+section: games
+priority: optional
+maintainer: Asciiverse <packages@asciiverse.sh>
+vendor: Asciiverse
+homepage: https://github.com/theasciiverse/pwmangband
+license: GPL-2.0-only
+description: |
+  Multiplayer Angband: a dungeon crawl to defeat Morgoth, alone or together.
+  PWMAngband is the online, client and server version of the classic
+  roguelike. pwmangband-play starts a private game on this machine and keeps
+  the characters for the next time; pwmangband-play <host> joins a server
+  elsewhere. Curses client only. By the PWMAngband team (MAngband and
+  PWMAngband developers), packaged by Asciiverse.
+contents:
+  - src: pwmangband
+    dst: /usr/bin/pwmangband
+    file_info: { mode: 0755 }
+  - src: pwmangclient
+    dst: /usr/bin/pwmangclient
+    file_info: { mode: 0755 }
+  - src: asciiverse/pwmangband-play
+    dst: /usr/bin/pwmangband-play
+    file_info: { mode: 0755 }
+  - src: stage/lib/customize
+    dst: /usr/share/pwmangband/customize
+  - src: stage/lib/gamedata
+    dst: /usr/share/pwmangband/gamedata
+  - src: stage/lib/help
+    dst: /usr/share/pwmangband/help
+  - src: stage/lib/screens
+    dst: /usr/share/pwmangband/screens
+  - src: stage/lib/tiles/list.txt
+    dst: /usr/share/pwmangband/tiles/list.txt
+    file_info: { mode: 0644 }
+  - src: setup/mangband.cfg
+    dst: /usr/share/pwmangband/mangband.cfg
+    file_info: { mode: 0644 }
+  - src: docs/copying.rst
+    dst: /usr/share/doc/pwmangband/copyright
+    file_info: { mode: 0644 }
+  - src: README.md
+    dst: /usr/share/doc/pwmangband/README.md
+    file_info: { mode: 0644 }
+  - src: changes.txt
+    dst: /usr/share/doc/pwmangband/changes.txt
+    file_info: { mode: 0644 }

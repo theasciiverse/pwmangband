@@ -1,0 +1,113 @@
+#!/bin/sh
+# Starts PWMAngband from an av install or the system packages.
+#
+# With no arguments: a game on this machine. Starts a PWMAngband server,
+# connects the client to it, and stops the server again when the client
+# quits. Characters, accounts and the world are kept in the player's data
+# folder, so the next game carries on where this one stopped.
+# With arguments: just the client.
+#   pwmangband-play <host> [port]   join a server elsewhere (port 18346 if
+#                                   none is given)
+#   pwmangband-play --list          pick a server from the list on the
+#                                   mangband.org metaserver
+#
+# av links ~/.local/bin/pwmangband to this file, so follow that link first.
+# System packages install it as /usr/bin/pwmangband-play, beside the server
+# (pwmangband) and the client (pwmangclient).
+self=$(readlink "$0" 2>/dev/null || printf '%s' "$0")
+dir=$(cd "$(dirname "$self")" && pwd)
+
+# av install: everything sits next to this script, with the game data in
+# lib/. System package: the programs are on PATH and find their data in
+# /usr/share/pwmangband by themselves.
+if [ -x "$dir/pwmangband" ] && [ -d "$dir/lib" ]; then
+  server_bin="$dir/pwmangband" client="$dir/pwmangclient" cfg_src="$dir/mangband.cfg"
+else
+  server_bin=pwmangband client=pwmangclient cfg_src=/usr/share/pwmangband/mangband.cfg
+fi
+
+if [ $# -gt 0 ]; then
+  [ "$1" = "--list" ] && exec "$client"
+  exec "$client" "$@"
+fi
+
+# The player's data folder, the same one the programs use (PATCHES.md)
+case "${XDG_DATA_HOME:-}" in
+  /*) data="$XDG_DATA_HOME/pwmangband" ;;
+  *) data="$HOME/.local/share/pwmangband" ;;
+esac
+mkdir -p "$data" || exit 1
+log="${XDG_CACHE_HOME:-$HOME/.cache}/asciiverse"
+mkdir -p "$log" 2>/dev/null || log=/tmp
+
+# The server reads mangband.cfg from the data folder. The first game copies
+# upstream's settings there, changed for a private game: no report to the
+# metaserver and no remote console. The player may edit it afterwards.
+cfg="$data/mangband.cfg"
+if [ ! -f "$cfg" ]; then
+  sed -e 's/^REPORT_TO_METASERVER = .*/REPORT_TO_METASERVER = false/' \
+      -e 's/^CONSOLE_PASSWORD = .*/# CONSOLE_PASSWORD = (none: the console is off)/' \
+      -e 's/^CONSOLE_LOCAL_ONLY = .*/CONSOLE_LOCAL_ONLY = true/' \
+      -e 's/^BIND_NAME = .*/BIND_NAME = "localhost"/' \
+      "$cfg_src" > "$cfg" || exit 1
+fi
+
+# A local game already running for this player (another terminal): join
+# its world rather than start a second server on the same files
+if [ -f "$data/server.run" ]; then
+  read -r opid oport < "$data/server.run"
+  if [ -n "$oport" ] && kill -0 "$opid" 2>/dev/null; then
+    exec "$client" 127.0.0.1 "$oport"
+  fi
+fi
+
+# The server saves the world and every character when it gets SIGTERM.
+# The client does not notice a closed terminal (it keeps running, spinning),
+# so it runs in the background while this script waits for it: a hangup or
+# kill then reaches the trap at once, and it stops the client and the server.
+server="" player=""
+cleanup() { kill $player $server 2>/dev/null; [ -n "$server" ] && rm -f "$data/server.run"; }
+trap 'cleanup; exit' INT TERM HUP
+trap cleanup EXIT
+
+# 18346 is PWMAngband's own port (it must be even); take the next one if it
+# is in use, and tell the server through mangband.cfg. A server whose port
+# is taken keeps retrying the bind without saying so, which shows in its log
+# as "Create TCP socket..." with nothing after it.
+port=18346
+slog="$log/pwmangband-server.log"
+while :; do
+  sed -e "s/^TCP_PORT = .*/TCP_PORT = $port/" "$cfg" > "$cfg.new" && mv "$cfg.new" "$cfg"
+  (cd "$data" && exec "$server_bin") >"$slog" 2>&1 &
+  server=$!
+  # world generation takes a moment; wait until the server listens
+  i=0 bind=0
+  while [ $i -lt 120 ] && [ $bind -lt 6 ] && kill -0 "$server" 2>/dev/null; do
+    grep -q "Server is running" "$slog" && break
+    grep -q "Create TCP socket" "$slog" && bind=$((bind + 1))
+    sleep 0.5
+    i=$((i + 1))
+  done
+  grep -q "Server is running" "$slog" && kill -0 "$server" 2>/dev/null && break
+  kill "$server" 2>/dev/null
+  server=""
+  if [ $bind -lt 6 ]; then
+    echo "pwmangband: the server did not start, see $slog" >&2
+    exit 1
+  fi
+  port=$((port + 2))
+  [ "$port" -gt 18366 ] && { echo "pwmangband: no free port between 18346 and 18366" >&2; exit 1; }
+done
+
+echo "$server $port" > "$data/server.run"
+
+# a background command gets /dev/null as input unless it is handed the
+# terminal explicitly
+exec 3<&0
+"$client" 127.0.0.1 "$port" <&3 3<&- &
+player=$!
+# A watcher also stops both as soon as this script is gone, however it ended
+# (closed terminal, killed by av or anything else).
+me=$$
+( while kill -0 "$me" 2>/dev/null; do sleep 2; done; cleanup ) </dev/null >/dev/null 2>&1 &
+wait "$player"
