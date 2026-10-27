@@ -1,3 +1,16 @@
+> **Play it with Asciiverse.** With [av](https://asciiverse.sh), the Asciiverse
+> client:
+>
+> ```
+> av install pwmangband
+> av play pwmangband
+> ```
+>
+> Or download the archive for your system from this repository's Releases,
+> unpack it and run `./pwmangband-play` (`pwmangband-play.exe` on Windows).
+>
+> The original README follows.
+
 # PWMAngband 1.6.2
 
 PWMAngband is a graphical dungeon adventure game that uses textual characters

@@ -87,3 +87,9 @@ beside the programs":
   can be joined from the network, like 0verkill's.
 - The client sends the machine's host name to the server it joins.
 - The client drops keys that arrive in a fast burst (pasted or scripted).
+
+## Ours
+
+- **How to play it, at the top of README.md.** A short note on installing and
+  starting it with av, or from a release archive; the original text follows
+  unchanged.
